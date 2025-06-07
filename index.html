@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Survey Grid Generator - OSGB Coordinates</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Generate survey grid points using OSGB coordinates for RTK GPS surveying">
+    <meta name="theme-color" content="#3498db">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="GridGen">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        input, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: #f5f5f5;
+            -webkit-text-size-adjust: 100%;
+            -webkit-overflow-scrolling: touch;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input[type="number"]:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+        .point-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .point-group h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .grid-params {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .grid-params h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .direction-group {
+            background: #f0e6ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .direction-group h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+            touch-action: manipulation;
+        }
+        button:hover, button:active {
+            background: linear-gradient(135deg, #2980b9, #1f3a93);
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+        .csv-output {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        .download-btn {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            margin-top: 10px;
+            margin-bottom: 0;
+        }
+        .download-btn:hover, .download-btn:active {
+            background: linear-gradient(135deg, #229954, #1e8449);
+        }
+        .info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        .col {
+            flex: 1;
+        }
+        .checkbox-group {
+            background: #e8f5e8;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .direction-info {
+            background: #e8f0ff;
+            border: 1px solid #b8d4ff;
+            color: #1e3a8a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .pwa-install {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        .pwa-install button {
+            background: #4caf50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 5px;
+            width: auto;
+            margin-left: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .row {
+                flex-direction: column;
+                gap: 0;
+            }
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Survey Grid Generator</h1>
+        
+        <div id="pwaInstall" class="pwa-install">
+            <strong>📱 Install as App</strong><br>
+            Add this tool to your home screen for offline use!
+            <button id="installBtn">Install App</button>
+        </div>
+        
+        <div class="info">
+            <strong>OSGB Grid Coordinate System</strong><br>
+            Enter coordinates in metres. Grid builds from the baseline in your chosen direction.
+        </div>
+        
+        <form id="gridForm">
+            <div class="point-group">
+                <h3>Reference Points</h3>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="alignToNorth" style="margin-right: 8px;">
+                        Align grid to true north (uses only Point A as reference)
+                    </label>
+                </div>
+                
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="pointA_easting">Point A Easting (m):</label>
+                            <input type="number" id="pointA_easting" step="0.001" placeholder="e.g. 529090.000" required>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="pointA_northing">Point A Northing (m):</label>
+                            <input type="number" id="pointA_northing" step="0.001" placeholder="e.g. 181680.000" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="pointBSection" class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="pointB_easting">Point B Easting (m):</label>
+                            <input type="number" id="pointB_easting" step="0.001" placeholder="e.g. 529190.000">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="pointB_northing">Point B Northing (m):</label>
+                            <input type="number" id="pointB_northing" step="0.001" placeholder="e.g. 181700.000">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="direction-group">
+                <h3>Grid Direction</h3>
+                <div class="direction-info">
+                    <strong>North-aligned mode:</strong> Grid extends in cardinal directions from Point A<br>
+                    <strong>Baseline mode:</strong> Grid extends relative to A-B baseline direction
+                </div>
+                <div class="form-group">
+                    <label for="gridDirection">Grid extends:</label>
+                    <select id="gridDirection">
+                        <option value="north-east">To the North-East (default)</option>
+                        <option value="north-west">To the North-West</option>
+                        <option value="south-east">To the South-East</option>
+                        <option value="south-west">To the South-West</option>
+                        <option value="baseline-left">To the Left of Baseline (A→B)</option>
+                        <option value="baseline-right">To the Right of Baseline (A→B)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-params">
+                <h3>Grid Parameters</h3>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="grid_length">Grid length along baseline (m):</label>
+                            <input type="number" id="grid_length" min="1" step="0.1" placeholder="e.g. 100" required>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="grid_width">Grid width (m):</label>
+                            <input type="number" id="grid_width" min="1" step="0.1" placeholder="e.g. 50" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="spacing_along">Grid spacing along baseline (m):</label>
+                            <input type="number" id="spacing_along" min="0.1" step="0.1" placeholder="e.g. 10" required>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="spacing_perp">Grid spacing width (m):</label>
+                            <input type="number" id="spacing_perp" min="0.1" step="0.1" placeholder="e.g. 10" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">Generate Grid Points</button>
+        </form>
+
+        <div id="output" class="output" style="display: none;">
+            <h3>Generated Grid Points</h3>
+            <p id="gridInfo"></p>
+            <textarea id="csvOutput" class="csv-output" readonly></textarea>
+            <button id="downloadBtn" class="download-btn">Download CSV File</button>
+        </div>
+    </div>
+
+    <script>
+        // PWA Installation
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        const pwaInstall = document.getElementById('pwaInstall');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            pwaInstall.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response: ${outcome}`);
+                deferredPrompt = null;
+                pwaInstall.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
+            pwaInstall.style.display = 'none';
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // Form functionality (unchanged from original)
+        document.getElementById('gridForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateGrid();
+        });
+
+        // Handle checkbox toggle
+        document.getElementById('alignToNorth').addEventListener('change', function() {
+            const pointBSection = document.getElementById('pointBSection');
+            const pointBEasting = document.getElementById('pointB_easting');
+            const pointBNorthing = document.getElementById('pointB_northing');
+            const gridDirection = document.getElementById('gridDirection');
+            
+            if (this.checked) {
+                pointBSection.style.display = 'none';
+                pointBEasting.required = false;
+                pointBNorthing.required = false;
+                // Hide baseline-specific options
+                Array.from(gridDirection.options).forEach(option => {
+                    if (option.value.startsWith('baseline-')) {
+                        option.style.display = 'none';
+                    }
+                });
+                // Reset to a cardinal direction if baseline option was selected
+                if (gridDirection.value.startsWith('baseline-')) {
+                    gridDirection.value = 'north-east';
+                }
+            } else {
+                pointBSection.style.display = 'flex';
+                pointBEasting.required = true;
+                pointBNorthing.required = true;
+                // Show all options
+                Array.from(gridDirection.options).forEach(option => {
+                    option.style.display = 'block';
+                });
+            }
+        });
+
+        // Initialize the direction dropdown state
+        document.getElementById('alignToNorth').dispatchEvent(new Event('change'));
+
+        function generateGrid() {
+            // Get input values
+            const pointA = {
+                easting: parseFloat(document.getElementById('pointA_easting').value),
+                northing: parseFloat(document.getElementById('pointA_northing').value)
+            };
+            
+            const alignToNorth = document.getElementById('alignToNorth').checked;
+            const gridDirection = document.getElementById('gridDirection').value;
+            let baselineUnit, perpUnit;
+            
+            if (alignToNorth) {
+                // Use north-aligned grid with directional options
+                switch (gridDirection) {
+                    case 'north-east':
+                        baselineUnit = { easting: 1, northing: 0 };   // East (baseline)
+                        perpUnit = { easting: 0, northing: 1 };       // North (perpendicular)
+                        break;
+                    case 'north-west':
+                        baselineUnit = { easting: -1, northing: 0 };  // West (baseline)
+                        perpUnit = { easting: 0, northing: 1 };       // North (perpendicular)
+                        break;
+                    case 'south-east':
+                        baselineUnit = { easting: 1, northing: 0 };   // East (baseline)
+                        perpUnit = { easting: 0, northing: -1 };      // South (perpendicular)
+                        break;
+                    case 'south-west':
+                        baselineUnit = { easting: -1, northing: 0 };  // West (baseline)
+                        perpUnit = { easting: 0, northing: -1 };      // South (perpendicular)
+                        break;
+                }
+            } else {
+                // Use angled grid based on Point B
+                const pointB = {
+                    easting: parseFloat(document.getElementById('pointB_easting').value),
+                    northing: parseFloat(document.getElementById('pointB_northing').value)
+                };
+                
+                // Calculate baseline direction vector (A to B)
+                const baselineVector = {
+                    easting: pointB.easting - pointA.easting,
+                    northing: pointB.northing - pointA.northing
+                };
+                
+                // Calculate baseline length and unit vector
+                const baselineLength = Math.sqrt(baselineVector.easting ** 2 + baselineVector.northing ** 2);
+                const baselineUnitPositive = {
+                    easting: baselineVector.easting / baselineLength,
+                    northing: baselineVector.northing / baselineLength
+                };
+                
+                // Calculate perpendicular unit vectors
+                const perpUnitLeft = {
+                    easting: -baselineUnitPositive.northing,  // 90° counterclockwise (left)
+                    northing: baselineUnitPositive.easting
+                };
+                const perpUnitRight = {
+                    easting: baselineUnitPositive.northing,   // 90° clockwise (right)
+                    northing: -baselineUnitPositive.easting
+                };
+                
+                // Apply direction based on selection
+                switch (gridDirection) {
+                    case 'north-east':
+                        baselineUnit = baselineUnitPositive;
+                        perpUnit = perpUnitLeft;
+                        break;
+                    case 'north-west':
+                        baselineUnit = { easting: -baselineUnitPositive.easting, northing: -baselineUnitPositive.northing };
+                        perpUnit = perpUnitRight;
+                        break;
+                    case 'south-east':
+                        baselineUnit = baselineUnitPositive;
+                        perpUnit = perpUnitRight;
+                        break;
+                    case 'south-west':
+                        baselineUnit = { easting: -baselineUnitPositive.easting, northing: -baselineUnitPositive.northing };
+                        perpUnit = perpUnitLeft;
+                        break;
+                    case 'baseline-left':
+                        baselineUnit = baselineUnitPositive;
+                        perpUnit = perpUnitLeft;
+                        break;
+                    case 'baseline-right':
+                        baselineUnit = baselineUnitPositive;
+                        perpUnit = perpUnitRight;
+                        break;
+                }
+            }
+            
+            const gridLength = parseFloat(document.getElementById('grid_length').value);
+            const gridWidth = parseFloat(document.getElementById('grid_width').value);
+            const spacingAlong = parseFloat(document.getElementById('spacing_along').value);
+            const spacingPerp = parseFloat(document.getElementById('spacing_perp').value);
+
+            // Calculate number of points in each direction
+            const pointsAlongBaseline = Math.floor(gridLength / spacingAlong) + 1;
+            const pointsPerp = Math.floor(gridWidth / spacingPerp) + 1;
+
+            // Generate grid points
+            const points = [];
+            let pointNumber = 1;
+
+            for (let j = 0; j < pointsPerp; j++) {
+                for (let i = 0; i < pointsAlongBaseline; i++) {
+                    const alongDistance = i * spacingAlong;
+                    const perpDistance = j * spacingPerp;
+                    
+                    // Calculate final coordinates
+                    const easting = pointA.easting + 
+                                   (alongDistance * baselineUnit.easting) + 
+                                   (perpDistance * perpUnit.easting);
+                    
+                    const northing = pointA.northing + 
+                                    (alongDistance * baselineUnit.northing) + 
+                                    (perpDistance * perpUnit.northing);
+                    
+                    points.push({
+                        name: `P${pointNumber.toString().padStart(3, '0')}`,
+                        easting: parseFloat(easting.toFixed(3)),
+                        northing: parseFloat(northing.toFixed(3)),
+                        elevation: 0.000
+                    });
+                    
+                    pointNumber++;
+                }
+            }
+
+            // Generate CSV output
+            let csvContent = "Name,Easting,Northing,Elevation\n";
+            points.forEach(point => {
+                csvContent += `${point.name},${point.easting.toFixed(3)},${point.northing.toFixed(3)},${point.elevation.toFixed(3)}\n`;
+            });
+
+            // Display results
+            const directionText = gridDirection.replace('-', '-').replace('baseline-', '').replace('north-', 'north-').replace('south-', 'south-');
+            const orientationText = alignToNorth ? `cardinal ${directionText}` : `${directionText} relative to A-B baseline`;
+            document.getElementById('gridInfo').textContent = 
+                `Generated ${points.length} points (${pointsAlongBaseline} × ${pointsPerp} grid extending ${orientationText})`;
+            document.getElementById('csvOutput').value = csvContent;
+            document.getElementById('output').style.display = 'block';
+
+            // Store CSV content for download
+            window.currentCSV = csvContent;
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            if (window.currentCSV) {
+                // Enhanced iOS download handling
+                const blob = new Blob([window.currentCSV], { type: 'text/csv;charset=utf-8;' });
+                
+                // Check if it's iOS Safari
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                
+                if (isIOS || isSafari) {
+                    // For iOS/Safari, use the share API if available
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'rtk_gps_grid_points.csv', { type: 'text/csv' })] })) {
+                        const file = new File([blob], 'rtk_gps_grid_points.csv', { type: 'text/csv' });
+                        navigator.share({
+                            files: [file],
+                            title: 'Survey Grid Points',
+                            text: 'RTK GPS Grid Points CSV File'
+                        }).catch(err => {
+                            console.log('Error sharing:', err);
+                            fallbackDownload();
+                        });
+                    } else {
+                        fallbackDownload();
+                    }
+                } else {
+                    // Standard download for other browsers
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'rtk_gps_grid_points.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }
+                
+                function fallbackDownload() {
+                    // Create a new window with the CSV data
+                    const csvWindow = window.open('', '_blank');
+                    if (csvWindow) {
+                        csvWindow.document.write(`
+                            <html>
+                                <head><title>Survey Grid Points CSV</title></head>
+                                <body>
+                                    <h3>Survey Grid Points</h3>
+                                    <p>Copy the text below and save as a .csv file:</p>
+                                    <textarea style="width:100%;height:400px;font-family:monospace;">${window.currentCSV}</textarea>
+                                    <br><br>
+                                    <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value).then(()=>alert('Copied to clipboard!'))">Copy to Clipboard</button>
+                                </body>
+                            </html>
+                        `);
+                    } else {
+                        alert('Please allow popups to download the CSV file, or copy the data from the text area above.');
+                    }
+                }
+            }
+        });
+        
+        // Prevent zoom on input focus (iOS)
+        document.addEventListener('touchstart', function() {}, true);
+    </script>
+</body>
+</html>
