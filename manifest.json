@@ -2,27 +2,27 @@
   "name": "Survey Grid Generator",
   "short_name": "GridGen",
   "description": "Generate survey grid points using OSGB coordinates for RTK GPS surveying",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#3498db",
   "theme_color": "#3498db",
   "orientation": "portrait",
-  "scope": "/",
+  "scope": "./",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png", 
+      "src": "./icon-512.png", 
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "apple-touch-icon.png",
+      "src": "./apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
     }

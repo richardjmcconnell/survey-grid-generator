@@ -1,11 +1,11 @@
-const CACHE_NAME = 'survey-grid-v1.0.0';
+const CACHE_NAME = 'survey-grid-v1.0.1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png'
 ];
 
 // Install event - cache resources
@@ -53,7 +53,7 @@ self.addEventListener('fetch', event => {
       .catch(() => {
         // If both cache and network fail, return offline page for navigation requests
         if (event.request.destination === 'document') {
-          return caches.match('/index.html');
+          return caches.match('./index.html');
         }
       })
   );
